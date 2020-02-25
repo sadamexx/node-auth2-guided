@@ -11,6 +11,8 @@ router.post('/register', (req, res) => {
 
   Users.add(user)
     .then(saved => {
+      req.session.loggedIn = true; //#7 this would keep them logged in once registered
+
       res.status(201).json(saved);
     })
     .catch(error => {
@@ -25,6 +27,9 @@ router.post('/login', (req, res) => {
     .first()
     .then(user => {
       if (user && bcrypt.compareSync(password, user.password)) {
+        req.session.loggedIn = true;// #4 we can save cookie info 
+        req.session.username = user.username;//#4   
+
         res.status(200).json({
           message: `Welcome ${user.username}!`,
         });
@@ -36,5 +41,23 @@ router.post('/login', (req, res) => {
       res.status(500).json(error);
     });
 });
+
+
+//# 11 create a log out and destroy the session (cookie may still be alive, but we can destroy session and cookie wont work)
+
+router.get('/logout', (req,res) => {
+  if(req.session){
+  req.session.destroy(error => {
+    if(err){
+      res.status(500).json({ message: "You are still logged in man, sowwy!"});
+    } else { 
+      res.status(200).json({message: "You successfully logged out!"});     
+    }
+  });
+} else {
+  res.status(200).json({message: "You successfully logged out!"});
+}
+});
+
 
 module.exports = router;
